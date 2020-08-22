@@ -81,7 +81,7 @@ func Test_concatPasswordLetters(t *testing.T) {
 		{
 			"5",
 			[]string{"l", "u", "n", "s", "c"},
-			"abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!\"#$%'()*,./:;<=>?@[]^_`{}~",
+			"abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!#$%()*/<=>?@[]{}",
 		},
 	}
 
@@ -121,7 +121,7 @@ func Test_outputsPasswords(t *testing.T) {
 		},
 		{
 			"5",
-			"abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!\"#$%'()*,./:;<=>?@[]^_`{}~",
+			"abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!#$%()*/<=>?@[]{}",
 		},
 	}
 
