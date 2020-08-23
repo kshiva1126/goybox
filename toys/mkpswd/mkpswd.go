@@ -1,26 +1,24 @@
-package controller
+package mkpswd
 
 import (
 	"crypto/rand"
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/kshiva1126/goybox/cmd/mkpswd/service"
 )
 
 type charFlags []string
 
 func (cf *charFlags) sort() error {
 	// Check for expected value.
-	err := service.AllowValue(*cf)
+	err := AllowValue(*cf)
 	if err != nil {
 		return err
 	}
 
 	cf2 := new(charFlags)
 	for _, c := range []string{"l", "u", "n", "s", "c"} {
-		bool, err := service.Contains(c, []string(*cf))
+		bool, err := Contains(c, []string(*cf))
 		if err != nil {
 			return err
 		}

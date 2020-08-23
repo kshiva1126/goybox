@@ -1,9 +1,9 @@
-package controller_test
+package mkpswd_test
 
 import (
 	"testing"
 
-	"github.com/kshiva1126/goybox/cmd/mkpswd/controller"
+	"github.com/kshiva1126/goybox/toys/mkpswd"
 )
 
 func Test_CreatePassword(t *testing.T) {
@@ -38,7 +38,7 @@ func Test_CreatePassword(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			outputs, err := controller.CreatePassword(tt.input, &nc, &np)
+			outputs, err := mkpswd.CreatePassword(tt.input, &nc, &np)
 			if err != nil {
 				t.Errorf("Expected return of nil, but got %v", err)
 			}
