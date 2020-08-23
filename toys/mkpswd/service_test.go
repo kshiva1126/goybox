@@ -1,9 +1,9 @@
-package service_test
+package mkpswd_test
 
 import (
 	"testing"
 
-	"github.com/kshiva1126/goybox/cmd/mkpswd/service"
+	"github.com/kshiva1126/goybox/toys/mkpswd"
 )
 
 func Test_AllowValue(t *testing.T) {
@@ -27,7 +27,7 @@ func Test_AllowValue(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.AllowValue(tt.input)
+			err := mkpswd.AllowValue(tt.input)
 			if err != nil {
 				if err.Error() != tt.expected {
 					t.Errorf("Expected return of %v, but got %v", tt.expected, err)
