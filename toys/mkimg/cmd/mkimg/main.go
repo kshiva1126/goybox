@@ -10,8 +10,8 @@ import (
 
 func main() {
 	var (
-		height    = flag.Int("h", 100, "Assign the image's height")
-		width     = flag.Int("w", 100, "Assign the image's width")
+		height    = flag.Int("h", 200, "Assign the image's height")
+		width     = flag.Int("w", 200, "Assign the image's width")
 		colorname = flag.String("c", "red", "Colorize the image")
 		filename  = flag.String("n", "sampleImage.png", "Name the image")
 	)

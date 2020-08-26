@@ -5,10 +5,14 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/colornames"
+	"golang.org/x/image/font"
+	"golang.org/x/image/math/fixed"
 )
 
 var (
@@ -29,6 +33,7 @@ func CreateImage(height, width *int, colorname, filename *string) (*os.File, err
 			img.Set(j, i, colorRGBA)
 		}
 	}
+	addLabel(img, 40, *height/2, "私はGoを書きます。")
 
 	if !strings.HasSuffix(*filename, ".png") {
 		extension := ".png"
@@ -58,4 +63,27 @@ func getColorRGBA(colorname string) (color.Color, error) {
 	}
 
 	return v, nil
+}
+
+func addLabel(img *image.RGBA, x, y int, label string) {
+	b, err := ioutil.ReadFile("../../font.ttf")
+	if err != nil {
+		panic(err)
+	}
+	tt, err := truetype.Parse(b)
+	if err != nil {
+		panic(err)
+	}
+
+	opt := truetype.Options{Size: 10}
+	col := color.RGBA{200, 100, 0, 255}
+	point := fixed.Point26_6{fixed.Int26_6(x * 64), fixed.Int26_6(y * 64)}
+
+	d := &font.Drawer{
+		Dst:  img,
+		Src:  image.NewUniform(col),
+		Face: truetype.NewFace(tt, &opt),
+		Dot:  point,
+	}
+	d.DrawString(label)
 }
