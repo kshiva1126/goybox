@@ -17,5 +17,5 @@ jobs:
 
       - name: Run tests
         run: |
-          cd ./toys/mkpswd ; go test -v . ; cd -
+          cd ./toys/mkpswd ; go test -v . ; cd ./cmd/mkpswd/ ; go run main.go ; cd ../../../../
           cd ./toys/mkimg ; go test -v . ; cd -
