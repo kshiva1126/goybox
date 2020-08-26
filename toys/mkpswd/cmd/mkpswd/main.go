@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kshiva1126/goybox/cmd/mkpswd"
+	"github.com/kshiva1126/goybox/toys/mkpswd"
 )
 
 type charFlags []string
