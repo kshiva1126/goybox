@@ -23,3 +23,5 @@ Usage of this command:
 ```
 $ cd ./cmd/mkimg ; go run main.go -t 私はGoを勉強中です -fs 20
 ```
+
+![output image](https://github.com/kshiva1126/goybox/blob/master/toys/mkimg/cmd/mkimg/sampleImage.png)
