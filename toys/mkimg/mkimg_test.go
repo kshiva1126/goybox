@@ -1,23 +1,23 @@
 package mkimg_test
 
 import (
-	"image"
-	_ "image/png"
-	"os"
+	"image/color"
 	"testing"
 
 	"github.com/kshiva1126/goybox/toys/mkimg"
 )
 
-func Test_CreateImage(t *testing.T) {
+func Test_Create(t *testing.T) {
 	type Input struct {
-		height, width       int
-		colorname, filename string
+		width, height, fontsize             int
+		imageColorname, fontColorname, text string
 	}
 
 	type Expected struct {
 		height, width int
+		color         color.RGBA
 	}
+
 	tests := []struct {
 		name     string
 		input    Input
@@ -26,14 +26,17 @@ func Test_CreateImage(t *testing.T) {
 		{
 			name: "1",
 			input: Input{
-				height:    100,
-				width:     100,
-				colorname: "red",
-				filename:  "test.png",
+				width:          50,
+				height:         100,
+				imageColorname: "red",
+				text:           "",
+				fontsize:       0,
+				fontColorname:  "",
 			},
 			expected: Expected{
+				width:  50,
 				height: 100,
-				width:  100,
+				color:  color.RGBA{0xff, 0x00, 0x00, 0xff},
 			},
 		},
 	}
@@ -41,28 +44,29 @@ func Test_CreateImage(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := mkimg.CreateImage(&tt.input.height,
-				&tt.input.width, &tt.input.colorname, &tt.input.filename)
+			c, err := mkimg.NewCreator(mkimg.Params{
+				Width:          &tt.input.width,
+				Height:         &tt.input.height,
+				ImageColorname: &tt.input.imageColorname,
+				Text:           &tt.input.text,
+				Fontsize:       &tt.input.fontsize,
+				FontColorname:  &tt.input.fontColorname,
+			})
 			if err != nil {
 				t.Errorf("Expected return of nil, but got %v", err)
 			}
-
-			reader, err := os.Open(tt.input.filename)
-			if err != nil {
-				t.Errorf("Expected return of nil, but got %v", err)
+			img := c.Create()
+			if img.Bounds().Dx() != tt.expected.width {
+				t.Errorf("Expected return of %v, but got %v",
+					tt.expected.width, img.Bounds().Dx())
 			}
-
-			config, _, err := image.DecodeConfig(reader)
-			if err != nil {
-				t.Errorf("Expected return of nil, but got %v", err)
+			if img.Bounds().Dy() != tt.expected.height {
+				t.Errorf("Expected return of %v, but got %v",
+					tt.expected.height, img.Bounds().Dy())
 			}
-
-			if config.Height != tt.expected.height {
-				t.Errorf("Expected return of %v, but got %v", tt.expected.height, config.Height)
-			}
-
-			if err := os.Remove(reader.Name()); err != nil {
-				t.Errorf("Expected return of nil, but got %v", err)
+			if img.At(0, 0) != tt.expected.color {
+				t.Errorf("Expected return of %v, but got %v",
+					tt.expected.color, img.At(0, 0))
 			}
 		})
 	}

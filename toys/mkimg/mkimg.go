@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
-	"io/ioutil"
-	"os"
-	"strings"
 
+	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font"
-	"golang.org/x/image/math/fixed"
 )
 
 var (
@@ -20,70 +16,147 @@ var (
 	y = 0
 )
 
-func CreateImage(height, width *int, colorname, filename *string) (*os.File, error) {
-	colorRGBA, err := getColorRGBA(*colorname)
-	if err != nil {
-		return nil, err
+// Creator is the main interface for this package.
+type Creator interface {
+	Create() *image.RGBA
+	SetSize(int, int)
+	SetImageColor(string) error
+	SetFont() error
+	SetFontColor(string) error
+	SetText(string)
+	SetFontsize(int)
+}
+
+// Params is parameters for NewCreator function.
+type Params struct {
+	Width, Height, Fontsize             *int
+	ImageColorname, FontColorname, Text *string
+}
+
+// NewCreator returns Creator Interface.
+func NewCreator(params Params) (Creator, error) {
+	c := &creator{}
+	if err := c.SetImageColor(*params.ImageColorname); err != nil {
+		return c, err
+	}
+	c.SetSize(*params.Width, *params.Height)
+	if *params.Text != "" {
+		if err := c.SetFont(); err != nil {
+			return c, err
+		}
+		c.SetFontColor(*params.FontColorname)
+		c.SetText(*params.Text)
+		c.SetFontsize(*params.Fontsize)
 	}
 
-	img := image.NewRGBA(image.Rect(x, y, *width, *height))
+	return c, nil
+}
+
+type creator struct {
+	Width, Height, Fontsize int
+	Text                    string
+	ImageColor, FontColor   color.Color
+	Font                    *truetype.Font
+}
+
+// Create returns the image
+func (c *creator) Create() *image.RGBA {
+	img := image.NewRGBA(image.Rect(x, y, c.Width, c.Height))
 
 	for i := img.Rect.Min.Y; i < img.Rect.Max.Y; i++ {
 		for j := img.Rect.Min.X; j < img.Rect.Max.X; j++ {
-			img.Set(j, i, colorRGBA)
+			img.Set(j, i, c.ImageColor)
 		}
 	}
-	addLabel(img, 40, *height/2, "私はGoを書きます。")
 
-	if !strings.HasSuffix(*filename, ".png") {
-		extension := ".png"
-		*filename += extension
-	}
-	file, err := os.Create(*filename)
-	defer file.Close()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if c.Text != "" {
+		c.addLabel(img)
 	}
 
-	if err = png.Encode(file, img); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	return file, nil
+	return img
 }
 
-func getColorRGBA(colorname string) (color.Color, error) {
-	colorname = strings.ToLower(string(rune(colorname[0]))) + colorname[1:]
-	colorNameMap := colornames.Map
-	v, ok := colorNameMap[colorname]
-	if !ok {
-		return nil, fmt.Errorf("invalid value \"%v\" for flag -c", colorname)
+// SetImageColor set the color of image.
+func (c *creator) SetImageColor(colorname string) error {
+	rgba, err := colorRGBA(colorname)
+	if err != nil {
+		return err
+	}
+	c.ImageColor = rgba
+	return nil
+}
+
+// SetFontColor set the font of image.
+func (c *creator) SetFontColor(colorname string) error {
+	rgba, err := colorRGBA(colorname)
+	if err != nil {
+		return err
+	}
+	c.FontColor = rgba
+	return nil
+}
+
+func colorRGBA(colorname string) (color.Color, error) {
+	colornameMap := colornames.Map
+	v, ok := colornameMap[colorname]
+	if ok == false {
+		return nil, fmt.Errorf("invalid value \"%v\"", colorname)
 	}
 
 	return v, nil
 }
 
-func addLabel(img *image.RGBA, x, y int, label string) {
-	b, err := ioutil.ReadFile("../../font.ttf")
-	if err != nil {
-		panic(err)
-	}
-	tt, err := truetype.Parse(b)
-	if err != nil {
-		panic(err)
-	}
+// SetSize set the width and height.
+func (c *creator) SetSize(width, height int) {
+	c.Width = width
+	c.Height = height
+}
 
-	opt := truetype.Options{Size: 10}
-	col := color.RGBA{200, 100, 0, 255}
-	point := fixed.Point26_6{fixed.Int26_6(x * 64), fixed.Int26_6(y * 64)}
+// SetFont set the font
+func (c *creator) SetFont() error {
+	tt, err := truetype.Parse(TTF)
+	if err != nil {
+		return err
+	}
+	c.Font = tt
+	return nil
+}
 
+// SetText set the text.
+func (c *creator) SetText(text string) {
+	c.Text = text
+}
+
+// SetFontsize set the fontsize.
+func (c *creator) SetFontsize(fontsize int) {
+	c.Fontsize = fontsize
+}
+
+func (c *creator) addLabel(img *image.RGBA) {
+	opt := truetype.Options{Size: float64(c.Fontsize)}
+	textWidth := c.calcTextWidth()
+	point := freetype.Pt((c.Width-textWidth)/2, (c.Height)/2)
 	d := &font.Drawer{
 		Dst:  img,
-		Src:  image.NewUniform(col),
-		Face: truetype.NewFace(tt, &opt),
+		Src:  image.NewUniform(c.FontColor),
+		Face: truetype.NewFace(c.Font, &opt),
 		Dot:  point,
 	}
-	d.DrawString(label)
+	d.DrawString(c.Text)
+}
+
+func (c *creator) calcTextWidth() int {
+	var face font.Face
+	var textWidth int
+	opts := truetype.Options{}
+	opts.Size = float64(c.Fontsize)
+	face = truetype.NewFace(c.Font, &opts)
+	for _, x := range c.Text {
+		awidth, ok := face.GlyphAdvance(rune(x))
+		if ok == false {
+			return textWidth
+		}
+		textWidth += int(float64(awidth) / 64)
+	}
+	return textWidth
 }
